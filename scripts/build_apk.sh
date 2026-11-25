@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export ANDROID_SDK_ROOT=/home/runner/android-sdk
+export ANDROID_HOME=/home/runner/android-sdk
+
+mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
+curl -sSL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip
+unzip -q cmdline-tools.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
+mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
+rm -f cmdline-tools.zip
+
+export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null
+yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+mkdir -p app/src/main/java/com/mickster19/assetstudio
+mkdir -p app/src/main/res/values
+mkdir -p app/src/main/assets
+cp index.html app/src/main/assets/index.html
+
+cat << 'MANIFEST' > app/src/main/AndroidManifest.xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application
+        android:label="Asset Studio"
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+MANIFEST
+
+cat << 'ACTIVITY' > app/src/main/java/com/mickster19/assetstudio/MainActivity.java
+package com.mickster19.assetstudio;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+
+public class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        WebView webView = new WebView(this);
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(true);
+        webView.setWebViewClient(new WebViewClient());
+        webView.loadUrl("file:///android_asset/index.html");
+        setContentView(webView);
+    }
+}
+ACTIVITY
+
+cat << 'STYLES' > app/src/main/res/values/styles.xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AssetStudio" parent="android:Theme.DeviceDefault.Light.NoActionBar" />
+</resources>
+STYLES
+
+cat << 'APPGRAD' > app/build.gradle
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.mickster19.assetstudio'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.mickster19.assetstudio"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+}
+APPGRAD
+
+cat << 'ROOTGRAD' > build.gradle
+plugins {
+    id 'com.android.application' version '8.2.2' apply false
+}
+ROOTGRAD
+
+cat << 'SETTGRAD' > settings.gradle
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "AssetStudio"
+include ':app'
+SETTGRAD
+
+gradle wrapper --gradle-version 8.4 --distribution-type all
+./gradlew assembleDebug --no-daemon
