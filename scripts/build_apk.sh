@@ -23,6 +23,10 @@ cat << 'MANIFEST' > app/src/main/AndroidManifest.xml
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
     <application
         android:label="Asset Studio"
         android:usesCleartextTraffic="true">
@@ -58,8 +62,29 @@ public class MainActivity extends Activity {
         settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(true);
         webView.setWebViewClient(new WebViewClient());
+        requestStoragePermissions();
         webView.loadUrl("file:///android_asset/index.html");
         setContentView(webView);
+    }
+
+    private void requestStoragePermissions() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
+        List<String> needed = new ArrayList<>();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(android.Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(android.Manifest.permission.READ_MEDIA_IMAGES);
+            }
+            if (checkSelfPermission(android.Manifest.permission.READ_MEDIA_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(android.Manifest.permission.READ_MEDIA_AUDIO);
+            }
+        } else {
+            if (checkSelfPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                needed.add(android.Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+        }
+        if (!needed.isEmpty()) {
+            requestPermissions(needed.toArray(new String[0]), 1002);
+        }
     }
 }
 ACTIVITY
