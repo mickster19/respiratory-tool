@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Asset Studio — Extract, Preview & Save</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-900 min-h-screen">
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-2">
+      <div>
+        <h1 class="text-xl font-bold tracking-tight text-slate-900">ASSET STUDIO</h1>
+        <p class="text-xs text-slate-500">Single-File Inspector • Deep Scan • Preview • Pack &amp; Save</p>
+      </div>
+      <span id="statusBadge" class="text-xs font-medium px-3 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+        Tayari Kuanza
+      </span>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-6">
+    <!-- LOG / STATUS BAR -->
+    <div id="activityLog" class="bg-white border border-slate-200 rounded-xl px-4 py-3 text-xs text-slate-700 shadow-sm">
+      <strong>Hali ya Mfumo:</strong> Pakia faili lolote kwenye Sehemu ya 1 kuanza uchunguzi wa kina.
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- SEHEMU YA 1: EXTRACT -->
+      <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-semibold text-slate-900">1. Extract (File → Media)</h2>
+            <span class="text-xs font-mono text-slate-500">STEP 01</span>
+          </div>
+          <p class="text-sm text-slate-600">
+            Pakia faili moja ili kuchunguza <em>header</em>, maandishi yanayosomeka, na kutafuta picha/sauti ndani yake.
+          </p>
+
+          <label class="block border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-lg p-4 text-center cursor-pointer transition">
+            <span class="block text-sm font-medium text-slate-800">Chagua Kifaili Cheupe / Binary</span>
+            <span class="block text-xs text-slate-500 mt-1">Hifadhi nakala ya asili kabla ya kujaribu</span>
+            <input id="rawFileInput" type="file" class="hidden" />
+          </label>
+
+          <div class="text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2 text-slate-700">
+            <div><strong>Jina:</strong> <span id="metaName">—</span></div>
+            <div><strong>Ukubwa:</strong> <span id="metaSize">—</span></div>
+            <div><strong>Header / Hex:</strong> <span id="metaHex" class="font-mono break-all">—</span></div>
+            <div><strong>ASCII Preview:</strong> <span id="metaAscii" class="font-mono break-all text-slate-600">—</span></div>
+            <div><strong>Matokeo ya Scan:</strong> <span id="scanResult" class="font-medium text-slate-900">—</span></div>
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2">
+          <button id="inspectBtn" type="button" class="w-full py-2.5 px-4 rounded-lg bg-slate-900 text-white text-sm font-medium hover:bg-slate-800 transition">
+            Chunguza &amp; Scan Picha/Sauti
+          </button>
+          <a id="downloadExtractedBtn" download class="hidden w-full text-center py-2 px-4 rounded-lg border border-slate-300 text-slate-800 text-xs font-medium hover:bg-slate-50 transition">
+            Pakua Faili Lililotoka
+          </a>
+        </div>
+      </section>
+
+      <!-- SEHEMU YA 2: PREVIEW -->
+      <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-semibold text-slate-900">2. Preview</h2>
+            <span class="text-xs font-mono text-slate-500">STEP 02</span>
+          </div>
+          <p class="text-sm text-slate-600">
+            Hakiki picha au sauti iliyopatikana kwenye scan au uliyoipakia kabla ya kuhifadhi.
+          </p>
+
+          <div id="previewBox" class="min-h-[220px] rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center p-3 overflow-hidden">
+            <p id="previewPlaceholder" class="text-xs text-slate-500 text-center">
+              Hakuna picha au sauti ya kuonyesha kwa sasa.
+            </p>
+            <img id="previewImage" alt="Preview" class="hidden max-h-56 w-auto rounded object-contain" />
+            <audio id="previewAudio" controls class="hidden w-full"></audio>
+          </div>
+
+          <div class="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg p-3">
+            <strong>Ufafanuzi:</strong> Kama faili halina PNG/JPG/WAV/OGG/MP3 iliyotambulika, linaweza kuwa <em>Unity serialized data</em> au <em>compressed texture (ETC2/ASTC)</em> inayohitaji muundo wa mchezo.
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-slate-100">
+          <button id="clearPreviewBtn" type="button" class="w-full py-2 px-4 rounded-lg border border-slate-300 text-slate-700 text-xs font-medium hover:bg-slate-50 transition">
+            Safisha Preview
+          </button>
+        </div>
+      </section>
+
+      <!-- SEHEMU YA 3: PACK & SAVE -->
+      <section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex flex-col justify-between">
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-semibold text-slate-900">3. Media → File &amp; Save</h2>
+            <span class="text-xs font-mono text-slate-500">STEP 03</span>
+          </div>
+          <p class="text-sm text-slate-600">
+            Pakia picha au sauti uliyoihariri, kagua tofauti ya ukubwa na faili la mwanzo, kisha hifadhi.
+          </p>
+
+          <label class="block border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-lg p-4 text-center cursor-pointer transition">
+            <span class="block text-sm font-medium text-slate-800">Chagua Picha au Sauti (.png / .mp3)</span>
+            <span class="block text-xs text-slate-500 mt-1">Tayari kwa hatua ya ku-save</span>
+            <input id="mediaFileInput" type="file" accept="image/*,audio/*" class="hidden" />
+          </label>
+
+          <div class="text-xs bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-1 text-slate-700">
+            <div><strong>Faili Jipya:</strong> <span id="mediaName">—</span></div>
+            <div><strong>Aina / Ukubwa:</strong> <span id="mediaMeta">—</span></div>
+            <div><strong>Hali ya Linganisho:</strong> <span id="compareStatus">Subiri faili</span></div>
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4 border-t border-slate-100 flex flex-col gap-2">
+          <button id="saveOutputBtn" type="button" class="w-full py-2.5 px-4 rounded-lg bg-emerald-700 text-white text-sm font-medium hover:bg-emerald-800 transition">
+            Save Output File
+          </button>
+          <a id="downloadSavedBtn" download class="hidden w-full text-center py-2 px-4 rounded-lg border border-emerald-700 text-emerald-800 text-xs font-medium hover:bg-emerald-50 transition">
+            Pakua Faili Lililo-savewa
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    let currentRawFile = null;
+    let currentMediaFile = null;
+    let extractedBlobUrl = null;
+    let savedBlobUrl = null;
+
+    const statusBadge = document.getElementById('statusBadge');
+    const activityLog = document.getElementById('activityLog');
+    const rawFileInput = document.getElementById('rawFileInput');
+    const metaName = document.getElementById('metaName');
+    const metaSize = document.getElementById('metaSize');
+    const metaHex = document.getElementById('metaHex');
+    const metaAscii = document.getElementById('metaAscii');
+    const scanResult = document.getElementById('scanResult');
+    const inspectBtn = document.getElementById('inspectBtn');
+    const downloadExtractedBtn = document.getElementById('downloadExtractedBtn');
+
+    const previewPlaceholder = document.getElementById('previewPlaceholder');
+    const previewImage = document.getElementById('previewImage');
+    const previewAudio = document.getElementById('previewAudio');
+    const clearPreviewBtn = document.getElementById('clearPreviewBtn');
+
+    const mediaFileInput = document.getElementById('mediaFileInput');
+    const mediaName = document.getElementById('mediaName');
+    const mediaMeta = document.getElementById('mediaMeta');
+    const compareStatus = document.getElementById('compareStatus');
+    const saveOutputBtn = document.getElementById('saveOutputBtn');
+    const downloadSavedBtn = document.getElementById('downloadSavedBtn');
+
+    function setStatus(badgeText, logText) {
+      statusBadge.textContent = badgeText;
+      if (logText) {
+        activityLog.innerHTML = `<strong>Hali ya Mfumo:</strong> ${logText}`;
+      }
+    }
+
+    function showImagePreview(url) {
+      previewPlaceholder.classList.add('hidden');
+      previewAudio.classList.add('hidden');
+      previewImage.src = url;
+      previewImage.classList.remove('hidden');
+    }
+
+    function showAudioPreview(url) {
+      previewPlaceholder.classList.add('hidden');
+      previewImage.classList.add('hidden');
+      previewAudio.src = url;
+      previewAudio.classList.remove('hidden');
+    }
+
+    function resetPreview() {
+      previewImage.classList.add('hidden');
+      previewAudio.classList.add('hidden');
+      previewPlaceholder.classList.remove('hidden');
+      previewImage.removeAttribute('src');
+      previewAudio.removeAttribute('src');
+    }
+
+    function bytesToAscii(bytes) {
+      return Array.from(bytes)
+        .map((b) => (b >= 32 && b <= 126 ? String.fromCharCode(b) : '.'))
+        .join('');
+    }
+
+    function findSignature(bytes, sig) {
+      for (let i = 0; i <= bytes.length - sig.length; i++) {
+        let match = true;
+        for (let j = 0; j < sig.length; j++) {
+          if (bytes[i + j] !== sig[j]) {
+            match = false;
+            break;
+          }
+        }
+        if (match) return i;
+      }
+      return -1;
+    }
+
+    rawFileInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      currentRawFile = file;
+      metaName.textContent = file.name;
+      metaSize.textContent = `${file.size.toLocaleString()} bytes`;
+      scanResult.textContent = 'Bado haijafanyiwa scan';
+      downloadExtractedBtn.classList.add('hidden');
+
+      const slice = await file.slice(0, 32).arrayBuffer();
+      const bytes = new Uint8Array(slice);
+      metaHex.textContent = Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join(' ') || 'Tupu';
+      metaAscii.textContent = bytesToAscii(bytes) || '—';
+      setStatus('Faili Limepakiwa', `Faili <strong>${file.name}</strong> limepakiwa. Bonyeza "Chunguza & Scan Picha/Sauti".`);
+    });
+
+    inspectBtn.addEventListener('click', async () => {
+      if (!currentRawFile) {
+        setStatus('Chagua Faili Kwanza', 'Tafadhali chagua faili kwenye Sehemu ya 1 kabla ya kubonyeza scan.');
+        return;
+      }
+
+      setStatus('Inafanya Scan...', `Inachunguza bytes zote za <strong>${currentRawFile.name}</strong>...`);
+      const buf = await currentRawFile.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+
+      const signatures = [
+        { name: 'PNG Image', ext: 'png', mime: 'image/png', sig: [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], kind: 'image' },
+        { name: 'JPEG Image', ext: 'jpg', mime: 'image/jpeg', sig: [0xff, 0xd8, 0xff], kind: 'image' },
+        { name: 'OGG Audio', ext: 'ogg', mime: 'audio/ogg', sig: [0x4f, 0x67, 0x67, 0x53], kind: 'audio' },
+        { name: 'WAV Audio', ext: 'wav', mime: 'audio/wav', sig: [0x52, 0x49, 0x46, 0x46], kind: 'audio' },
+        { name: 'MP3 (ID3)', ext: 'mp3', mime: 'audio/mpeg', sig: [0x49, 0x44, 0x33], kind: 'audio' }
+      ];
+
+      let found = null;
+      for (const item of signatures) {
+        const idx = findSignature(bytes, item.sig);
+        if (idx !== -1) {
+          found = { ...item, offset: idx };
+          break;
+        }
+      }
+
+      if (extractedBlobUrl) URL.revokeObjectURL(extractedBlobUrl);
+
+      if (found) {
+        const slicedBytes = bytes.slice(found.offset);
+        const blob = new Blob([slicedBytes], { type: found.mime });
+        extractedBlobUrl = URL.createObjectURL(blob);
+
+        scanResult.textContent = `${found.name} (offset ${found.offset} bytes)`;
+        if (found.kind === 'image') {
+          showImagePreview(extractedBlobUrl);
+        } else {
+          showAudioPreview(extractedBlobUrl);
+        }
+
+        downloadExtractedBtn.href = extractedBlobUrl;
+        downloadExtractedBtn.download = `${currentRawFile.name}_offset${found.offset}.${found.ext}`;
+        downloadExtractedBtn.classList.remove('hidden');
+        setStatus(`Imepatikana (${found.ext.toUpperCase()})`, `Imegundua <strong>${found.name}</strong> kuanzia byte <strong>${found.offset}</strong>. Unaweza kuihakiki au kuipakua.`);
+      } else {
+        resetPreview();
+        downloadExtractedBtn.classList.add('hidden');
+        scanResult.textContent = 'Hakuna signature wazi ya PNG/JPG/OGG/WAV/MP3';
+        setStatus('Binary / Imefungwa', `Faili <strong>${currentRawFile.name}</strong> halina picha/sauti wazi iliyopatikana kwenye scan. Jaribu faili jingine kubwa au lenye media.`);
+      }
+    });
+
+    mediaFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      currentMediaFile = file;
+      mediaName.textContent = file.name;
+      mediaMeta.textContent = `${file.type || 'unknown'} • ${file.size.toLocaleString()} bytes`;
+
+      const url = URL.createObjectURL(file);
+      if (file.type.startsWith('image/')) {
+        showImagePreview(url);
+      } else if (file.type.startsWith('audio/')) {
+        showAudioPreview(url);
+      }
+
+      if (currentRawFile) {
+        const diff = file.size - currentRawFile.size;
+        compareStatus.textContent = `Asili: ${currentRawFile.size}B | Mpya: ${file.size}B (${diff >= 0 ? '+' : ''}${diff}B)`;
+      } else {
+        compareStatus.textContent = 'Hakuna faili asili lililochaguliwa';
+      }
+      setStatus('Media Tayari', `Faili <strong>${file.name}</strong> limewekwa kwenye Preview na tayari kwa Save.`);
+    });
+
+    saveOutputBtn.addEventListener('click', async () => {
+      if (!currentMediaFile) {
+        setStatus('Hakuna Media', 'Chagua picha au sauti kwenye Sehemu ya 3 kwanza.');
+        return;
+      }
+
+      const buf = await currentMediaFile.arrayBuffer();
+      const baseName = currentRawFile ? currentRawFile.name : currentMediaFile.name;
+      const blob = new Blob([buf], { type: 'application/octet-stream' });
+
+      if (savedBlobUrl) URL.revokeObjectURL(savedBlobUrl);
+      savedBlobUrl = URL.createObjectURL(blob);
+
+      downloadSavedBtn.href = savedBlobUrl;
+      downloadSavedBtn.download = `${baseName}.bin`;
+      downloadSavedBtn.classList.remove('hidden');
+      setStatus('Save Imekamilika', `Faili la matokeo <strong>${baseName}.bin</strong> lipo tayari kupakuliwa.`);
+    });
+
+    clearPreviewBtn.addEventListener('click', () => {
+      resetPreview();
+      setStatus('Preview Safi', 'Eneo la Preview limesafishwa.');
+    });
+  </script>
+</body>
+</html>
