@@ -11,8 +11,8 @@ mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-to
 rm -f cmdline-tools.zip
 
 export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
-yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null
-yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+(yes || true) | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" --licenses >/dev/null 2>&1 || true
+(yes || true) | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
 mkdir -p app/src/main/java/com/mickster19/assetstudio
 mkdir -p app/src/main/res/values
